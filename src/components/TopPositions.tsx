@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Briefcase } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -20,9 +20,10 @@ interface TopPositionsProps {
 }
 
 interface PositionData {
-  cargo: string
+  position: string
   count: number
   percentage: number
+  color: string
 }
 
 const COLORS = ['#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EF4444', '#F97316', '#06B6D4', '#84CC16', '#EC4899', '#6B7280']
@@ -31,11 +32,7 @@ export default function TopPositions({ filters }: TopPositionsProps) {
   const [positionsData, setPositionsData] = useState<PositionData[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadPositionsData()
-  }, [filters])
-
-  const loadPositionsData = async () => {
+  const loadPositionsData = useCallback(async () => {
     setLoading(true)
     try {
       const { data: allLeads, error } = await supabase
@@ -96,45 +93,39 @@ export default function TopPositions({ filters }: TopPositionsProps) {
           )
         }
 
-        // Filtrar apenas leads com cargo preenchido
-        const leadsWithPosition = filteredLeads.filter(lead => 
-          lead.cargo && lead.cargo.trim() !== ''
-        )
+        // Agrupar por cargo
+        const positionCounts: { [key: string]: number } = {}
+        filteredLeads.forEach(lead => {
+          const position = lead.cargo || 'Não informado'
+          positionCounts[position] = (positionCounts[position] || 0) + 1
+        })
 
-        if (leadsWithPosition.length > 0) {
-          // Agrupar por cargo
-          const positionGroups: { [key: string]: number } = {}
-          leadsWithPosition.forEach(lead => {
-            const cargo = lead.cargo.trim()
-            positionGroups[cargo] = (positionGroups[cargo] || 0) + 1
-          })
+        const total = filteredLeads.length
+        const processedData: PositionData[] = Object.entries(positionCounts)
+          .map(([position, count], index) => ({
+            position,
+            count,
+            percentage: total > 0 ? (count / total) * 100 : 0,
+            color: COLORS[index % COLORS.length]
+          }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 15) // Top 15
 
-          const total = Object.values(positionGroups).reduce((sum, count) => sum + count, 0)
-
-          // Converter para array e pegar top 15
-          const positionsArray = Object.entries(positionGroups)
-            .map(([cargo, count]) => ({
-              cargo,
-              count,
-              percentage: total > 0 ? (count / total) * 100 : 0
-            }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 15)
-
-          setPositionsData(positionsArray)
-        } else {
-          setPositionsData([])
-        }
+        setPositionsData(processedData)
       } else {
         setPositionsData([])
       }
     } catch (error) {
-      console.error('Erro ao carregar dados de cargos:', error)
+      console.error('Erro ao carregar dados de posições:', error)
       setPositionsData([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
+
+  useEffect(() => {
+    loadPositionsData()
+  }, [loadPositionsData])
 
   if (loading) {
     return (
@@ -182,10 +173,10 @@ export default function TopPositions({ filters }: TopPositionsProps) {
 
       <div className="space-y-3">
         {positionsData.map((position, index) => (
-          <div key={position.cargo} className="group">
+          <div key={position.position} className="group">
             <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium text-gray-700 truncate flex-1 mr-4" title={position.cargo}>
-                {index + 1}. {position.cargo}
+              <span className="text-sm font-medium text-gray-700 truncate flex-1 mr-4" title={position.position}>
+                {index + 1}. {position.position}
               </span>
               <div className="text-right flex items-center gap-2">
                 <span className="text-sm font-semibold text-gray-900">
@@ -202,7 +193,7 @@ export default function TopPositions({ filters }: TopPositionsProps) {
                 className="h-3 rounded-full transition-all duration-300 group-hover:opacity-80"
                 style={{
                   width: `${position.percentage}%`,
-                  backgroundColor: COLORS[index % COLORS.length]
+                  backgroundColor: position.color
                 }}
               ></div>
             </div>

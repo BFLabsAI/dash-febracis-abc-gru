@@ -1,14 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Navigation from '@/components/Navigation'
 import GlobalFilters from '@/components/GlobalFilters'
 import BigNumbers from '@/components/BigNumbers'
-import LeadsByRegion from '@/components/LeadsByRegion'
 import Timeline from '@/components/Timeline'
+import LeadsByRegion from '@/components/LeadsByRegion'
 import TopUTMs from '@/components/TopUTMs'
 import LeadsTable from '@/components/LeadsTable'
-import { testSupabaseConnection } from '@/lib/supabase'
 
 interface FilterState {
   startDate: string

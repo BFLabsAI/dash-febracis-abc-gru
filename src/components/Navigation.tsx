@@ -1,10 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
+import { BarChart3, Menu, X, Users, Search } from 'lucide-react'
 
 export default function Navigation() {
+  const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 
   return (
@@ -12,12 +15,20 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <h1 className="text-xl font-bold text-yellow-600">FEBRACIS</h1>
-              <p className="text-xs text-gray-500">Dashboard de Geração de Demanda</p>
+            <div className="flex-shrink-0 flex items-center">
+              <Image
+                src="/cropped-febracis-350.png"
+                alt="Febracis Logo"
+                width={160}
+                height={40}
+                className="h-10 w-auto"
+              />
+            </div>
+            <div className="ml-4">
+              <p className="text-xs text-gray-500">Dashboard de Geração de Demanda • ABC Paulista & GRU</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-8">
             <Link
               href="/"

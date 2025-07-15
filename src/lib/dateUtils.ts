@@ -1,4 +1,4 @@
-import { format, parse, parseISO, isValid } from 'date-fns'
+import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 /**
@@ -11,7 +11,8 @@ export function parseBrazilianDateLocal(dateString: string): Date | null {
   try {
     // Assume sempre formato ISO 8601 (timestampz)
     return new Date(dateString)
-  } catch (error) {
+  } catch {
+    console.warn(`⚠️ Erro ao fazer parse da data: ${dateString}`)
     return null
   }
 }
@@ -77,10 +78,10 @@ export function isDateInRange(dateString: string, startDate: string, endDate: st
   const date = parseBrazilianDate(dateString)
   if (!date) return false
   
-  const start = parseISO(startDate)
-  const end = parseISO(endDate)
+  const start = parseBrazilianDateLocal(startDate)
+  const end = parseBrazilianDateLocal(endDate)
   
-  if (!isValid(start) || !isValid(end)) return false
+  if (!start || !end) return false
   
   return date >= start && date <= end
 }

@@ -48,11 +48,12 @@ export async function testSupabaseConnection() {
         result: 'OK',
         details: `Tabela acessível com ${count} registros`
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string }
       tests.push({
         name: 'Conexão',
         result: 'ERRO',
-        details: `${error.message} (Código: ${error.code})`
+        details: `${err.message || 'Erro desconhecido'} (Código: ${(err.code || 'desconhecido')})`
       })
     }
 
@@ -78,27 +79,30 @@ export async function testSupabaseConnection() {
           details: `Tabela vazia ou sem dados`
         })
       }
-    } catch (error: any) {
-      if (error.code === 'PGRST116') {
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string }
+      if (err.code === 'PGRST116') {
         tests.push({
           name: 'Acesso aos dados',
-          result: 'RLS ATIVO',
-          details: 'Row Level Security está bloqueando acesso. Execute o SQL sugerido.'
+          result: 'ERRO (RLS)',
+          details: 'Row Level Security está bloqueando o acesso - precisa configurar políticas no Supabase'
         })
       } else {
+        const errorMessage = err.message || 'Erro desconhecido'
         tests.push({
           name: 'Acesso aos dados',
           result: 'ERRO',
-          details: error.message
+          details: errorMessage
         })
       }
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
     tests.push({
       name: 'Erro geral',
       result: 'FALHA',
-      details: error.message
+      details: errorMessage
     })
   }
 
@@ -130,11 +134,13 @@ export async function tryMultipleConnectionStrategies() {
         error: error?.message || 'Dados vazios'
       })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    const errorMessage = err.message || 'Erro desconhecido'
     strategies.push({
       name: 'Query direta',
       success: false,
-      error: error.message
+      error: errorMessage
     })
   }
 
@@ -159,11 +165,13 @@ export async function tryMultipleConnectionStrategies() {
         error: error?.message || 'Dados vazios'
       })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    const errorMessage = err.message || 'Erro desconhecido'
     strategies.push({
       name: 'Query com campos específicos',
       success: false,
-      error: error.message
+      error: errorMessage
     })
   }
 

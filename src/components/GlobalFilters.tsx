@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Filter } from 'lucide-react'
-import { supabase, tryMultipleConnectionStrategies } from '@/lib/supabase'
+import { Filter } from 'lucide-react'
+import { tryMultipleConnectionStrategies } from '@/lib/supabase'
 
 interface FilterState {
   startDate: string
@@ -35,10 +35,10 @@ export default function GlobalFilters({ filters, onFiltersChange }: GlobalFilter
         console.log(`✅ GlobalFilters: Sucesso com ${result.strategy}`)
         
         // Extrair unidades e funis únicos dos dados
-        const uniqueUnidades = [...new Set(result.data.map((item: any) => item.unidade))]
+        const uniqueUnidades = [...new Set(result.data.map((item: { unidade: string }) => item.unidade))]
           .filter(Boolean) as string[]
         
-        const uniqueFunis = [...new Set(result.data.map((item: any) => item.form_name))]
+        const uniqueFunis = [...new Set(result.data.map((item: { form_name: string }) => item.form_name))]
           .filter(Boolean) as string[]
         
         setContas(uniqueUnidades)

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Building2 } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Building } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface QualitativeFilterState {
@@ -24,11 +24,7 @@ export default function IdentifiedCompanies({ filters }: IdentifiedCompaniesProp
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadCompaniesData()
-  }, [filters])
-
-  const loadCompaniesData = async () => {
+  const loadCompaniesData = useCallback(async () => {
     setLoading(true)
     try {
       const { data: allLeads, error } = await supabase
@@ -89,17 +85,12 @@ export default function IdentifiedCompanies({ filters }: IdentifiedCompaniesProp
           )
         }
 
-        // Contar empresas identificadas (empresa não nula/vazia e diferente de 'null'/'NULL')
-        const identified = filteredLeads.filter(lead => {
-          const emp = lead.empresa
-          return (
-            typeof emp === 'string' &&
-            emp.trim() !== '' &&
-            emp.trim().toLowerCase() !== 'null'
-          )
-        }).length
+        // Contar empresas identificadas (excluindo null e "NULL")
+        const identifiedCompanies = filteredLeads.filter(lead => 
+          lead.empresa && lead.empresa.toLowerCase() !== 'null'
+        )
 
-        setIdentifiedCount(identified)
+        setIdentifiedCount(identifiedCompanies.length)
         setTotalCount(filteredLeads.length)
       } else {
         setIdentifiedCount(0)
@@ -112,7 +103,11 @@ export default function IdentifiedCompanies({ filters }: IdentifiedCompaniesProp
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
+
+  useEffect(() => {
+    loadCompaniesData()
+  }, [loadCompaniesData])
 
   const percentage = totalCount > 0 ? (identifiedCount / totalCount) * 100 : 0
 
@@ -135,7 +130,7 @@ export default function IdentifiedCompanies({ filters }: IdentifiedCompaniesProp
     <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
       <div className="flex items-center gap-3 mb-4">
         <div className="p-3 rounded-lg bg-blue-50">
-          <Building2 className="h-6 w-6 text-blue-600" />
+          <Building className="h-6 w-6 text-blue-600" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-800">Empresas Identificadas</h3>

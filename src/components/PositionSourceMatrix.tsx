@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Grid3X3 } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Activity } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface QualitativeFilterState {
@@ -33,11 +33,7 @@ export default function PositionSourceMatrix({ filters }: PositionSourceMatrixPr
   const [maxCount, setMaxCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadMatrixData()
-  }, [filters])
-
-  const loadMatrixData = async () => {
+  const loadMatrixData = useCallback(async () => {
     setLoading(true)
     try {
       const { data: allLeads, error } = await supabase
@@ -98,67 +94,38 @@ export default function PositionSourceMatrix({ filters }: PositionSourceMatrixPr
           )
         }
 
-        // Filtrar apenas leads com cargo e utm_source preenchidos
-        const validLeads = filteredLeads.filter(lead => 
-          lead.cargo && lead.cargo.trim() !== '' &&
-          lead.utm_source && lead.utm_source.trim() !== ''
-        )
+        // Extrair cargos e sources únicos
+        // Criar matriz de dados
+        const matrix: MatrixCell[] = []
+        const cargosList = [...new Set(filteredLeads.map(lead => lead.cargo || 'Não informado'))]
+        const sourcesList = [...new Set(filteredLeads.map(lead => lead.utm_source || 'Não informado'))]
 
-        if (validLeads.length > 0) {
-          // Obter listas únicas de cargos e sources
-          const uniqueCargos = [...new Set(validLeads.map(l => l.cargo.trim()))].sort()
-          const uniqueSources = [...new Set(validLeads.map(l => l.utm_source.trim()))].sort()
+        setCargos(cargosList.slice(0, 15)) // Limitar a 15 cargos
+        setSources(sourcesList.slice(0, 10)) // Limitar a 10 sources
 
-          // Limitar a 10 cargos e 8 sources mais frequentes para não sobrecarregar a tela
-          const cargoFreq: { [key: string]: number } = {}
-          const sourceFreq: { [key: string]: number } = {}
+        let maxCount = 0
 
-          validLeads.forEach(lead => {
-            cargoFreq[lead.cargo.trim()] = (cargoFreq[lead.cargo.trim()] || 0) + 1
-            sourceFreq[lead.utm_source.trim()] = (sourceFreq[lead.utm_source.trim()] || 0) + 1
-          })
+        cargosList.slice(0, 15).forEach(cargo => {
+          sourcesList.slice(0, 10).forEach(source => {
+            const count = filteredLeads.filter(lead => 
+              (lead.cargo || 'Não informado') === cargo && 
+              (lead.utm_source || 'Não informado') === source
+            ).length
 
-          const topCargos = Object.entries(cargoFreq)
-            .sort(([,a], [,b]) => b - a)
-            .slice(0, 10)
-            .map(([cargo]) => cargo)
+            if (count > maxCount) maxCount = count
 
-          const topSources = Object.entries(sourceFreq)
-            .sort(([,a], [,b]) => b - a)
-            .slice(0, 8)
-            .map(([source]) => source)
-
-          // Criar matriz
-          const matrix: MatrixCell[] = []
-          let max = 0
-
-          topCargos.forEach(cargo => {
-            topSources.forEach(source => {
-              const count = validLeads.filter(lead => 
-                lead.cargo.trim() === cargo && lead.utm_source.trim() === source
-              ).length
-
-              if (count > max) max = count
-
-              matrix.push({
-                cargo,
-                source,
-                count,
-                percentage: validLeads.length > 0 ? (count / validLeads.length) * 100 : 0
-              })
+            const total = filteredLeads.length
+            matrix.push({
+              cargo,
+              source,
+              count,
+              percentage: total > 0 ? (count / total) * 100 : 0
             })
           })
+        })
 
-          setMatrixData(matrix)
-          setCargos(topCargos)
-          setSources(topSources)
-          setMaxCount(max)
-        } else {
-          setMatrixData([])
-          setCargos([])
-          setSources([])
-          setMaxCount(0)
-        }
+        setMatrixData(matrix)
+        setMaxCount(maxCount)
       } else {
         setMatrixData([])
         setCargos([])
@@ -174,7 +141,11 @@ export default function PositionSourceMatrix({ filters }: PositionSourceMatrixPr
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
+
+  useEffect(() => {
+    loadMatrixData()
+  }, [loadMatrixData])
 
   const getCellIntensity = (count: number) => {
     if (maxCount === 0) return 0
@@ -214,7 +185,7 @@ export default function PositionSourceMatrix({ filters }: PositionSourceMatrixPr
     return (
       <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <Grid3X3 className="h-5 w-5 text-gray-500" />
+          <Activity className="h-5 w-5 text-gray-500" />
           <h3 className="text-lg font-semibold text-gray-800">Matriz Calor: Cargo × Fonte</h3>
         </div>
         <div className="text-center py-8">
@@ -227,7 +198,7 @@ export default function PositionSourceMatrix({ filters }: PositionSourceMatrixPr
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
       <div className="flex items-center gap-2 mb-4">
-        <Grid3X3 className="h-5 w-5 text-gray-500" />
+        <Activity className="h-5 w-5 text-gray-500" />
         <h3 className="text-lg font-semibold text-gray-800">Matriz Calor: Cargo × Fonte</h3>
         <span className="text-sm text-gray-500">(Correlação entre cargos e canais de aquisição)</span>
       </div>

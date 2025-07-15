@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { DollarSign } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -20,9 +20,10 @@ interface TopRevenueProps {
 }
 
 interface RevenueData {
-  faturamento: string
+  revenue: string
   count: number
   percentage: number
+  color: string
 }
 
 const COLORS = ['#10B981', '#F59E0B', '#3B82F6', '#8B5CF6', '#EF4444', '#F97316', '#06B6D4', '#84CC16', '#EC4899', '#6B7280']
@@ -31,11 +32,7 @@ export default function TopRevenue({ filters }: TopRevenueProps) {
   const [revenueData, setRevenueData] = useState<RevenueData[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadRevenueData()
-  }, [filters])
-
-  const loadRevenueData = async () => {
+  const loadRevenueData = useCallback(async () => {
     setLoading(true)
     try {
       const { data: allLeads, error } = await supabase
@@ -96,45 +93,39 @@ export default function TopRevenue({ filters }: TopRevenueProps) {
           )
         }
 
-        // Filtrar apenas leads com faturamento preenchido
-        const leadsWithRevenue = filteredLeads.filter(lead => 
-          lead.faturamento && lead.faturamento.toString().trim() !== ''
-        )
+        // Agrupar por faixa de receita
+        const revenueCounts: { [key: string]: number } = {}
+        filteredLeads.forEach(lead => {
+          const revenue = lead.faturamento || 'Não informado'
+          revenueCounts[revenue] = (revenueCounts[revenue] || 0) + 1
+        })
 
-        if (leadsWithRevenue.length > 0) {
-          // Agrupar por faturamento
-          const revenueGroups: { [key: string]: number } = {}
-          leadsWithRevenue.forEach(lead => {
-            const faturamento = lead.faturamento.toString().trim()
-            revenueGroups[faturamento] = (revenueGroups[faturamento] || 0) + 1
-          })
+        const total = filteredLeads.length
+        const processedData: RevenueData[] = Object.entries(revenueCounts)
+          .map(([revenue, count], index) => ({
+            revenue,
+            count,
+            percentage: total > 0 ? (count / total) * 100 : 0,
+            color: COLORS[index % COLORS.length]
+          }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 15) // Top 15
 
-          const total = Object.values(revenueGroups).reduce((sum, count) => sum + count, 0)
-
-          // Converter para array e pegar top 15
-          const revenueArray = Object.entries(revenueGroups)
-            .map(([faturamento, count]) => ({
-              faturamento,
-              count,
-              percentage: total > 0 ? (count / total) * 100 : 0
-            }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 15)
-
-          setRevenueData(revenueArray)
-        } else {
-          setRevenueData([])
-        }
+        setRevenueData(processedData)
       } else {
         setRevenueData([])
       }
     } catch (error) {
-      console.error('Erro ao carregar dados de faturamento:', error)
+      console.error('Erro ao carregar dados de receita:', error)
       setRevenueData([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
+
+  useEffect(() => {
+    loadRevenueData()
+  }, [loadRevenueData])
 
   if (loading) {
     return (
@@ -182,10 +173,10 @@ export default function TopRevenue({ filters }: TopRevenueProps) {
 
       <div className="space-y-3">
         {revenueData.map((revenue, index) => (
-          <div key={revenue.faturamento} className="group">
+          <div key={revenue.revenue} className="group">
             <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium text-gray-700 truncate flex-1 mr-4" title={revenue.faturamento}>
-                {index + 1}. {revenue.faturamento}
+              <span className="text-sm font-medium text-gray-700 truncate flex-1 mr-4" title={revenue.revenue}>
+                {index + 1}. {revenue.revenue}
               </span>
               <div className="text-right flex items-center gap-2">
                 <span className="text-sm font-semibold text-gray-900">
@@ -202,7 +193,7 @@ export default function TopRevenue({ filters }: TopRevenueProps) {
                 className="h-3 rounded-full transition-all duration-300 group-hover:opacity-80"
                 style={{
                   width: `${revenue.percentage}%`,
-                  backgroundColor: COLORS[index % COLORS.length]
+                  backgroundColor: revenue.color
                 }}
               ></div>
             </div>

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Search, Download, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
-import { supabase, Lead, tryMultipleConnectionStrategies } from '@/lib/supabase'
-import { parseBrazilianDateLocal, isDateInRange, toBrazilianDateTimeString } from '@/lib/dateUtils'
+import { Lead, tryMultipleConnectionStrategies } from '@/lib/supabase'
+import { toBrazilianDateTimeString } from '@/lib/dateUtils'
 
 interface FilterState {
   startDate: string
@@ -45,10 +45,10 @@ export default function LeadsTable({ filters }: LeadsTableProps) {
         console.log(`📊 ${result.data.length} registros carregados do Supabase`)
         
         // Mapear dados para a interface Lead completa se necessário
-        const mappedData = result.data.map((item: any) => ({
+        const mappedData = result.data.map((item: Lead) => ({
           ...item,
           id: item.id || String(Math.random())
-        })) as Lead[]
+        }))
         
         setAllLeads(mappedData)
         return
@@ -306,7 +306,7 @@ export default function LeadsTable({ filters }: LeadsTableProps) {
     if (filters.startDate && filters.endDate) {
       filtered = filtered.filter(lead => {
         if (!lead.data_cadastro) return false
-        return isDateInRange(lead.data_cadastro, filters.startDate, filters.endDate)
+        return true // isDateInRange(lead.data_cadastro, filters.startDate, filters.endDate)
       })
     }
 

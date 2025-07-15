@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { isDateInRange } from '@/lib/dateUtils'
 
 interface FilterState {
   startDate: string
@@ -20,17 +19,16 @@ interface RegionData {
   region: string
   count: number
   percentage: number
+  color: string
 }
+
+const COLORS = ['#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EF4444', '#F97316', '#06B6D4', '#84CC16', '#EC4899', '#6B7280']
 
 export default function LeadsByRegion({ filters }: LeadsByRegionProps) {
   const [regionData, setRegionData] = useState<RegionData[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadRegionData()
-  }, [filters])
-
-  const loadRegionData = async () => {
+  const loadRegionData = useCallback(async () => {
     setLoading(true)
     try {
       const { data: allLeads, error } = await supabase
@@ -40,22 +38,12 @@ export default function LeadsByRegion({ filters }: LeadsByRegionProps) {
       if (error) throw error
 
       if (allLeads && allLeads.length > 0) {
-        let leads = allLeads
+        // Aplicar filtros
+        let filteredLeads = allLeads
 
-        if (filters.conta.length > 0) {
-          leads = leads.filter(lead => 
-            lead.unidade && filters.conta.includes(lead.unidade)
-          )
-        }
-
-        if (filters.funil.length > 0) {
-          leads = leads.filter(lead => 
-            lead.form_name && filters.funil.includes(lead.form_name)
-          )
-        }
-
+        // Filtro de período
         if (filters.startDate && filters.endDate) {
-          leads = leads.filter(lead => {
+          filteredLeads = filteredLeads.filter(lead => {
             if (!lead.data_cadastro) return false
             const date = new Date(lead.data_cadastro)
             const start = new Date(filters.startDate)
@@ -64,101 +52,51 @@ export default function LeadsByRegion({ filters }: LeadsByRegionProps) {
           })
         }
 
+        // Filtros de conta e funil
+        if (filters.conta.length > 0) {
+          filteredLeads = filteredLeads.filter(lead => 
+            lead.unidade && filters.conta.includes(lead.unidade)
+          )
+        }
+
+        if (filters.funil.length > 0) {
+          filteredLeads = filteredLeads.filter(lead => 
+            lead.form_name && filters.funil.includes(lead.form_name)
+          )
+        }
+
         // Agrupar por região
-        const regionGroups: { [key: string]: number } = {}
-        
-        leads.forEach(lead => {
-          const regiao = lead.regiao || 'Não informado'
-          regionGroups[regiao] = (regionGroups[regiao] || 0) + 1
+        const regionCounts: { [key: string]: number } = {}
+        filteredLeads.forEach(lead => {
+          const region = lead.regiao || 'Não informado'
+          regionCounts[region] = (regionCounts[region] || 0) + 1
         })
 
-        // Calcular total para percentuais
-        const total = Object.values(regionGroups).reduce((sum, count) => sum + count, 0)
-
-        // Converter para array
-        const regionData = Object.entries(regionGroups)
-          .map(([region, count]) => ({
+        const total = filteredLeads.length
+        const processedData: RegionData[] = Object.entries(regionCounts)
+          .map(([region, count], index) => ({
             region,
             count,
-            percentage: total > 0 ? (count / total) * 100 : 0
+            percentage: total > 0 ? (count / total) * 100 : 0,
+            color: COLORS[index % COLORS.length]
           }))
           .sort((a, b) => b.count - a.count)
 
-        setRegionData(regionData)
+        setRegionData(processedData)
       } else {
-        // Dados de exemplo baseados no CSV
-        let leads = [
-          {
-            regiao: 'ABC Paulista',
-            data_cadastro: '15-07-2025 06:01',
-            unidade: 'ds_performance',
-            form_name: 'MCIS - Nova Pagina 01'
-          },
-          {
-            regiao: 'Baixada',
-            data_cadastro: '15-07-2025 06:20',
-            unidade: 'Febracis_GRU',
-            form_name: 'ML5 - FORM'
-          },
-          {
-            regiao: 'Baixada Santista',
-            data_cadastro: '15-07-2025 06:22',
-            unidade: 'Febracis_GRU',
-            form_name: 'ML5 - FORM'
-          }
-        ]
-        console.log('LeadsByRegion: Usando dados de exemplo')
-
-        if (filters.conta.length > 0) {
-          leads = leads.filter(lead => 
-            lead.unidade && filters.conta.includes(lead.unidade)
-          )
-        }
-
-        if (filters.funil.length > 0) {
-          leads = leads.filter(lead => 
-            lead.form_name && filters.funil.includes(lead.form_name)
-          )
-        }
-
-        if (filters.startDate && filters.endDate) {
-          leads = leads.filter(lead => {
-            if (!lead.data_cadastro) return false
-            const date = new Date(lead.data_cadastro)
-            const start = new Date(filters.startDate)
-            const end = new Date(filters.endDate)
-            return date >= start && date <= end
-          })
-        }
-
-        // Agrupar por região
-        const regionGroups: { [key: string]: number } = {}
-        
-        leads.forEach(lead => {
-          const regiao = lead.regiao || 'Não informado'
-          regionGroups[regiao] = (regionGroups[regiao] || 0) + 1
-        })
-
-        // Calcular total para percentuais
-        const total = Object.values(regionGroups).reduce((sum, count) => sum + count, 0)
-
-        // Converter para array
-        const regionData = Object.entries(regionGroups)
-          .map(([region, count]) => ({
-            region,
-            count,
-            percentage: total > 0 ? (count / total) * 100 : 0
-          }))
-          .sort((a, b) => b.count - a.count)
-
-        setRegionData(regionData)
+        setRegionData([])
       }
     } catch (error) {
       console.error('Erro ao carregar dados por região:', error)
+      setRegionData([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
+
+  useEffect(() => {
+    loadRegionData()
+  }, [loadRegionData])
 
   if (loading) {
     return (

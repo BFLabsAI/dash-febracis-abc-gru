@@ -22,30 +22,30 @@ export async function POST(request: NextRequest) {
     
     // Análise de UTM Sources
     const utmSources = leads?.map(lead => lead.utm_source).filter(Boolean)
-    const utmSourceCounts = utmSources?.reduce((acc: any, source) => {
+    const utmSourceCounts = utmSources?.reduce((acc: Record<string, number>, source) => {
       acc[source] = (acc[source] || 0) + 1
       return acc
-    }, {})
+    }, {} as Record<string, number>)
     const topUtmSources = Object.entries(utmSourceCounts || {})
       .sort(([,a], [,b]) => (b as number) - (a as number))
       .slice(0, 5)
 
     // Análise de UTM Medium
     const utmMediums = leads?.map(lead => lead.utm_medium).filter(Boolean)
-    const utmMediumCounts = utmMediums?.reduce((acc: any, medium) => {
+    const utmMediumCounts = utmMediums?.reduce((acc: Record<string, number>, medium) => {
       acc[medium] = (acc[medium] || 0) + 1
       return acc
-    }, {})
+    }, {} as Record<string, number>)
     const topUtmMediums = Object.entries(utmMediumCounts || {})
       .sort(([,a], [,b]) => (b as number) - (a as number))
       .slice(0, 3)
 
     // Análise de UTM Campaign
     const utmCampaigns = leads?.map(lead => lead.utm_campaign).filter(Boolean)
-    const utmCampaignCounts = utmCampaigns?.reduce((acc: any, campaign) => {
+    const utmCampaignCounts = utmCampaigns?.reduce((acc: Record<string, number>, campaign) => {
       acc[campaign] = (acc[campaign] || 0) + 1
       return acc
-    }, {})
+    }, {} as Record<string, number>)
     const topUtmCampaigns = Object.entries(utmCampaignCounts || {})
       .sort(([,a], [,b]) => (b as number) - (a as number))
       .slice(0, 3)
@@ -63,20 +63,20 @@ export async function POST(request: NextRequest) {
     
     // Posições mais comuns
     const positions = leads?.map(lead => lead.cargo).filter(Boolean)
-    const positionCounts = positions?.reduce((acc: any, pos) => {
+    const positionCounts = positions?.reduce((acc: Record<string, number>, pos) => {
       acc[pos] = (acc[pos] || 0) + 1
       return acc
-    }, {})
+    }, {} as Record<string, number>)
     const topPositions = Object.entries(positionCounts || {})
       .sort(([,a], [,b]) => (b as number) - (a as number))
       .slice(0, 5)
 
     // Análise de receita
     const revenues = leads?.map(lead => lead.receita_empresa).filter(Boolean)
-    const revenueCounts = revenues?.reduce((acc: any, rev) => {
+    const revenueCounts = revenues?.reduce((acc: Record<string, number>, rev) => {
       acc[rev] = (acc[rev] || 0) + 1
       return acc
-    }, {})
+    }, {} as Record<string, number>)
     const topRevenues = Object.entries(revenueCounts || {})
       .sort(([,a], [,b]) => (b as number) - (a as number))
       .slice(0, 3)

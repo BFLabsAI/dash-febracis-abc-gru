@@ -43,7 +43,7 @@ export default function ChatWidget() {
       
       const dataResult = await dataResponse.json()
       
-      let systemPrompt = `Você é um assistente especializado em análise de dados de leads/prospects de marketing digital. Você tem acesso aos dados reais do dashboard e deve responder com base neles.
+      const systemPrompt = `Você é um assistente especializado em análise de dados de leads/prospects de marketing digital. Você tem acesso aos dados reais do dashboard e deve responder com base neles.
 
 DADOS DISPONÍVEIS:
 
@@ -170,7 +170,7 @@ Pergunta do usuário: ${userMessage}`
             {messages.length === 0 && (
               <div className="text-gray-600 text-sm text-center mt-8">
                 <p className="mb-2">🎯 <strong>Pergunte sobre os dados!</strong></p>
-                <p className="text-xs">Exemplos: "Quantos leads temos?", "Quais as principais fontes UTM?", "Análise por período"</p>
+                <p className="text-xs">Exemplos: &quot;Quantos leads temos?&quot;, &quot;Quais as principais fontes UTM?&quot;, &quot;Análise por período&quot;</p>
               </div>
             )}
             {messages.map((msg, i) => (

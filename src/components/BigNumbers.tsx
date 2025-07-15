@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, UserCheck, TrendingUp, Clock } from 'lucide-react'
-import { supabase, tryMultipleConnectionStrategies } from '@/lib/supabase'
-import { parseBrazilianDateLocal, isDateInRange, toBrazilianDateString } from '@/lib/dateUtils'
+import { Users, Building, Target, Calendar } from 'lucide-react'
+import { tryMultipleConnectionStrategies } from '@/lib/supabase'
 
 interface FilterState {
   startDate: string
@@ -160,7 +159,12 @@ export default function BigNumbers({ filters }: BigNumbersProps) {
       if (filters.startDate && filters.endDate) {
         leads = leads.filter(lead => {
           if (!lead.data_cadastro) return false
-          return isDateInRange(lead.data_cadastro, filters.startDate, filters.endDate)
+          // Assuming data_cadastro is in Brazilian format like 'DD-MM-YYYY HH:mm'
+          const leadDate = new Date(lead.data_cadastro);
+          const start = new Date(filters.startDate);
+          const end = new Date(filters.endDate);
+          end.setHours(23, 59, 59, 999); // Set end date to the end of the day
+          return leadDate >= start && leadDate <= end;
         })
       }
 
@@ -224,21 +228,21 @@ export default function BigNumbers({ filters }: BigNumbersProps) {
     {
       title: 'Leads Únicos',
       value: formatNumber(metrics.uniqueLeads),
-      icon: UserCheck,
+      icon: Building,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
     {
       title: 'Leads/Dia',
       value: metrics.leadsPerDay.toFixed(1),
-      icon: TrendingUp,
+      icon: Target,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50'
     },
     {
       title: 'Últimas 24h',
       value: formatNumber(metrics.leads24h),
-      icon: Clock,
+      icon: Calendar,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
     }
