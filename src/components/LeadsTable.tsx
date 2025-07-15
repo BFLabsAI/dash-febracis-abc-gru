@@ -273,7 +273,7 @@ export default function LeadsTable({ filters }: LeadsTableProps) {
       console.log('📊 Usando dados de exemplo baseados no CSV')
       setAllLeads(sampleData)
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('💥 ERRO CRÍTICO:', error)
       
       // Fallback final
@@ -444,7 +444,7 @@ export default function LeadsTable({ filters }: LeadsTableProps) {
     }
   }
 
-  const formatValue = (value: any, fieldKey?: string) => {
+  const formatValue = (value: string | number | null | undefined, fieldKey?: string) => {
     if (value == null) return '-'
     
     // Formatação especial para data_cadastro

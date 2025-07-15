@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Users, Building, Target, Calendar } from 'lucide-react'
 import { tryMultipleConnectionStrategies } from '@/lib/supabase'
 
@@ -31,11 +31,7 @@ export default function BigNumbers({ filters }: BigNumbersProps) {
   })
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadMetrics()
-  }, [filters])
-
-  const loadMetrics = async () => {
+  const loadMetrics = useCallback(async () => {
     setLoading(true)
     try {
       console.log('📊 BigNumbers: Tentando conexão...')
@@ -199,8 +195,8 @@ export default function BigNumbers({ filters }: BigNumbersProps) {
         leadsPerDay,
         leads24h
       })
-    } catch (error: any) {
-      console.error('❌ BigNumbers erro:', error.message)
+    } catch (error) {
+      console.error('❌ BigNumbers erro:', error instanceof Error ? error.message : 'Erro desconhecido')
       // Fallback em caso de erro - números corretos baseados nos 9 registros
       setMetrics({
         totalLeads: 9,
@@ -211,7 +207,11 @@ export default function BigNumbers({ filters }: BigNumbersProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadMetrics()
+  }, [loadMetrics])
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('pt-BR').format(num)

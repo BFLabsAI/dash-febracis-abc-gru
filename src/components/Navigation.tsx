@@ -4,10 +4,10 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { BarChart3, Menu, X, Users, Search } from 'lucide-react'
+import { } from 'lucide-react'
 
 export default function Navigation() {
-  const [isOpen, setIsOpen] = useState(false)
+  // const [isOpen, setIsOpen] = useState(false) // Comentado pois não é usado
   const pathname = usePathname()
 
   return (

@@ -238,11 +238,11 @@ export default function DetailedProfiles({ filters }: DetailedProfilesProps) {
     document.body.removeChild(link)
   }
 
-  const formatValue = (value: any, fieldKey?: string) => {
+  const formatValue = (value: unknown, fieldKey?: string) => {
     if (value == null) return '-'
     
     if (fieldKey === 'data_cadastro') {
-      const date = value ? new Date(value) : null
+      const date = value ? new Date(value as string) : null
       if (date) {
         return toBrazilianDateTimeString(date)
       }

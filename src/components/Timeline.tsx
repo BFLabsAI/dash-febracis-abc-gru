@@ -45,7 +45,7 @@ export default function Timeline({ filters }: TimelineProps) {
 
       if (allLeads && allLeads.length > 0) {
         // Sempre usar todos os dados para garantir que algo aparece
-        let leads = allLeads
+        const leads = allLeads
 
         if (viewMode === 'day') {
           const dateGroups: { [key: string]: { [source: string]: number } } = {}
@@ -123,9 +123,13 @@ export default function Timeline({ filters }: TimelineProps) {
     }
   }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: {
+    active?: boolean
+    payload?: Array<{ dataKey: string; value: number; color: string }>
+    label?: string
+  }) => {
     if (active && payload && payload.length) {
-      const total = payload.reduce((sum: number, item: any) => sum + item.value, 0)
+      const total = payload.reduce((sum: number, item) => sum + item.value, 0)
       
       return (
         <div className="bg-white p-3 border rounded-lg shadow-lg">
@@ -134,9 +138,9 @@ export default function Timeline({ filters }: TimelineProps) {
             Total: {total} leads
           </p>
           {payload
-            .filter((item: any) => item.value > 0)
-            .sort((a: any, b: any) => b.value - a.value)
-            .map((item: any, index: number) => (
+            .filter((item) => item.value > 0)
+            .sort((a, b) => b.value - a.value)
+            .map((item, index: number) => (
               <p key={index} className="text-sm" style={{ color: item.color }}>
                 {item.dataKey}: {item.value} ({((item.value / total) * 100).toFixed(1)}%)
               </p>

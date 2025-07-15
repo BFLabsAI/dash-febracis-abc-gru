@@ -196,7 +196,7 @@ export default function TopUTMs({ filters }: TopUTMsProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {utmSections.map((section, sectionIndex) => (
+        {utmSections.map((section) => (
           <div key={section.field} className="bg-white p-6 rounded-lg shadow-sm border">
             <h4 className="text-md font-semibold text-gray-800 mb-4">{section.title}</h4>
             
